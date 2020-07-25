@@ -1,0 +1,145 @@
+---
+
+
+  - name: update yum
+    yum: update_cache=yes
+
+  - name: install wget
+    yum: name='wget' state=installed
+
+  - name: install jdk
+    yum: name='java-1.8.0-openjdk.x86_64' state=installed
+    
+  - name: create "nexus" group
+    group: name=nexus
+
+  - name: create "nexus" user
+    user: name=nexus group=nexus
+  
+
+  - name: download nexus
+    get_url: url={{nexus_download_url}} dest={{nexus_download_dest}}
+    register: nexus_download
+
+  - name: create {{nexus_extracted_dir}} directory
+    file: path={{nexus_extracted_dir}} state=directory
+    when: nexus_download.changed
+    
+
+  - name: extract nexus to {{nexus_extracted_dir}}
+    command: tar xzf {{nexus_download_dest}} -C {{nexus_extracted_dir}} --strip-components=1
+    when: nexus_download.changed
+    
+
+  - name: move nexus to {{nexus_dir}} directory
+    command: cp -a {{nexus_extracted_dir}}/. {{nexus_dir}}
+    when: nexus_download.changed
+    
+
+  - name: remove {{nexus_extracted_dir}} directory
+    command: rm -rf {{nexus_extracted_dir}}
+    when: nexus_download.changed
+    
+
+  - name: make {{nexus_dir}} directory property of "nexus" user/group
+    file: path={{nexus_dir}} group=nexus owner=nexus recurse=true
+    
+
+  - name: make nexus runned by "nexus" user
+    lineinfile: dest={{nexus_dir}}/bin/nexus regexp="#RUN_AS_USER=" line="RUN_AS_USER=nexus" backrefs=true
+    
+
+  - name: set NEXUS_HOME
+    lineinfile: dest={{nexus_dir}}/bin/nexus regexp="^NEXUS_HOME" line="NEXUS_HOME={{nexus_dir}}" backrefs=true
+    
+
+  - name: create nexus piddir
+    file: path=/var/run/nexus state=directory group=nexus owner=nexus
+    
+
+  - name: set nexus pidir
+    lineinfile: dest={{nexus_dir}}/bin/nexus regexp="^#PIDDIR=" line="PIDDIR=/var/run/nexus" backrefs=true
+    
+
+  - name: create symbolic links to /etc/init.d/nexus
+    file: src={{nexus_dir}}/bin/nexus dest=/etc/init.d/nexus state=link
+    
+
+  - name: configure runlevel links for nexus
+    command: chkconfig nexus on
+    
+  
+
+  - name: start nexus
+    service: name=nexus state=started pattern={{nexus_dir}}
+
+
+  - stat: path=/usr/local/sonatype-work/nexus3/admin.password
+    register: passwordpath
+
+  - name: password actions  
+    block:  
+      
+
+      - name: getting default nexus password
+        shell: cat /usr/local/sonatype-work/nexus3/admin.password
+        register: password
+
+      - name: show adm password
+        debug: 
+            msg: "{{ password.stdout }}"
+
+      
+      - name: updating admin password
+        uri:
+          url: "http://localhost:8081/service/rest/beta/security/users/admin/change-password "
+          user: "admin"
+          password: "{{ password.stdout }}"
+          headers:
+            Content-Type: "text/plain"
+          method: PUT
+          status_code: 200,204
+          force_basic_auth: yes
+          body: "{{ admin_password }}"
+    when:  passwordpath.stat.exists  
+
+  - name: disabling anonymous access
+    uri:
+      url: "http://localhost:8081/service/rest/beta/security/anonymous"
+      user: "admin"
+      password: "{{ admin_password }}"
+      body_format: json
+      headers:
+        Content-Type: "application/json"
+        Accept: "application/json"
+      method: PUT
+      status_code: 200,204
+      force_basic_auth: yes
+      body: {
+          "enabled": false
+            }  
+
+  - name: Adding user Jenkins
+    ignore_errors: yes
+    uri:
+      url: "http://localhost:8081/service/rest/beta/security/users"
+      user: "admin"
+      password: "{{ admin_password }}"
+      body_format: json
+      headers:
+        Content-Type: "application/json"
+        Accept: "application/json"
+      method: POST
+      status_code: 200,204
+      force_basic_auth: yes
+      body: {
+        "userId":"jenkins",
+        "firstName":"jenkins",
+        "lastName":"slave",
+        "emailAddress":"dpysarenko@griddynamics.com",
+        "password":"jenkins",
+        "status":"active",
+        "roles":["nx-admin"]
+           }
+     
+   
