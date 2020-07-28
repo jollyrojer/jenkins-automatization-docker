@@ -1,0 +1,98 @@
+---
+
+  - name: Check Hostname
+    command: hostname
+    register: hname
+
+  - debug: msg="{{ hname.stdout }}"
+
+#install packages
+  - name: yum Update
+    yum: update_cache=yes
+
+  - name: Install Java jdk and python-pip
+    yum:
+      name:
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+      - python-pip
+
+  - name: Upgrade boto
+    shell: pip install boto==2.9 --upgrade
+
+#install Jenkins
+#[WARNING]: Consider using the get_url or uri module rather than running 'curl'.  If you need to use command because get_url or uri is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
+  - name: Add jenkins keys and list
+    shell: |
+      curl --silent --location http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo | tee /etc/yum.repos.d/jenkins.repo
+      rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+  #   wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+  #   sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+  #   apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9B7D32F2D50582E6
+  - name: Update system
+    yum: update_cache=yes
+
+  - name: Install Jenkins
+    yum:
+      name: jenkins-2.235.1
+
+  - name: Upload groovy files
+    copy:
+      src: ./00-basic-security.groovy
+      dest: "{{ jenkins_home }}/init.groovy.d/"
+      mode: 0755
+
+  - name: include vars
+    include_vars:
+      file: plugins.yml
+      name: plugins
+
+  - name: install plugins
+    jenkins_plugin:
+      name: "{{ plugins }}"
+    register: plugin_result
+    until: plugin_result is success
+    retries: 4
+    delay: 2
+    with_items: "{{ plugins }}"
+
+  # - name: edit jenkins sysconfig
+  #   shell: |
+  #     sed -i 's/JENKINS_JAVA_OPTIONS="/JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false /' /etc/sysconfig/jenkins
+  #     source /etc/sysconfig/jenkins
+
+  # - name: Allow OpenSSH
+  #   firewalld:
+  #     service: sshd
+  #     permanent: true
+  #     state: enabled
+
+  - name: Allow all access to tcp port 8080
+    firewalld:
+      port: 8080/tcp
+      permanent: yes
+      state: enabled
+      zone: public
+
+  - name: reload service firewalld
+    systemd:
+      name: firewalld
+      state: reloaded
+
+  # - name: Add jenkins keys and list
+  #   shell: |
+  #     firewall-cmd --permanent --zone=public --add-port=8080/tcp
+  #     firewall-cmd --reload
+
+  # - name: Enable UFW
+  #   firewalld:
+  #     state: enabled
+  #     #command: usermod -aG docker jenkins
+
+  - name: Start & Enable Jenkins
+    sysvinit:
+      name: jenkins
+      state: started
+      enabled: true
+
+...

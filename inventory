@@ -1,0 +1,9 @@
+[Jenkins]
+Jenkins2 ansible_host=34.89.212.43
+
+[Nexus]
+Nexus3 ansible_host=
+
+[All:children]
+Jenkins
+Nexus

@@ -1,0 +1,121 @@
+---
+
+  - name: Check Hostname
+    command: hostname
+    register: hname
+
+  - debug: msg="{{ hname.stdout }}"
+
+  - name: yum Update
+    yum: update_cache=yes
+
+  - name: Downoload packages
+    yum:
+      name: ['yum-utils', 'device-mapper-persistent-data', 'lvm2', 'python2', 'python-pip']
+      state: latest
+
+  - name: Configuring docker-ce repo
+    get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+      mode: 0644
+
+  - name: Upgrade pip
+    pip:
+      name: pip
+      state: latest
+
+  - name: Install docker-ce
+    yum:
+      name: docker-ce
+      state: present
+
+  - name: Install docker
+    pip:
+      name: docker
+      state: present
+
+  # - name: Start & enable docker
+  #   service:
+  #     name: docker
+  #     state: started
+  #     enabled: yes
+
+  - name: Start n enable docker
+    systemd:
+      name: docker
+      state: started
+      enabled: true
+
+  - name: Add user daniel_zaharchenk00 to docker group
+    user:
+      name: daniel_zaharchenk00
+      groups: docker
+      append: true
+
+  - name: Allow all access to tcp port 8080
+    firewalld:
+      port: 8080/tcp
+      permanent: yes
+      state: enabled
+      zone: public
+
+  - name: reload service firewalld
+    systemd:
+      name: firewalld
+      state: reloaded
+
+  - name: Creates Docker directory
+    file:
+      path: ./Docker/scripts/
+      state: directory
+
+  - name: Copy jenkins plugins file
+    copy:
+      src: jenkins-plugins
+      dest: ./Docker/jenkins-plugins
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Set templates to Docker directory
+    template:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    with_items:
+      - { src: 'Dockerfile.j2', dest: './Docker/Dockerfile' }
+      - { src: '00-basic-security.groovy.j2', dest: './Docker/scripts/00-basic-security.groovy' }
+      - { src: '01-global-settings.groovy.j2', dest: './Docker/scripts/01-global-settings.groovy' }
+      - { src: '02-matrix-autorization.groovy.j2', dest: './Docker/scripts/02-matrix-autorization.groovy' }
+      - { src: '03-add-credentials.groovy.j2', dest: './Docker/scripts/03-add-credentials.groovy' }
+      - { src: '04-create-job.groovy.j2', dest: './Docker/scripts/04-create-job.groovy' }
+      - { src: '05-maven.groovy.j2', dest: './Docker/scripts/05-maven.groovy' }
+      - { src: 'Jenkinsfile.j2', dest: './Docker/scripts/Jenkinsfile' }
+
+  - name: Build image n run container
+    shell: |
+      docker build -t jenkins-docker ./Docker/.
+      docker run -d --name jenkins -p 0.0.0.0:8080:8080 -p 0.0.0.0:50000:50000 -v jenkins_home:/var/jenkins_home jenkins-docker
+
+  # - name: Build Docker image
+  #   docker_image:
+  #     name: jenkins-docker
+  #     build:
+  #       path: ./Docker
+  #       # tag: jenkins
+  #       args:
+  #         log_volume: /var/log/jenkins
+  #         listen_port: 8080
+  #     source: build
+  #
+  # - name: Create a data container
+  #   docker_container:
+  #     name: jenkins
+  #     image: jenkins-docker
+  #     volumes:
+  #       - jenkins_home:/jenkins_home
+  #     ports:
+  #       - "0.0.0.0:8080:8080"
+  #       - "0.0.0.0:50000:50000"
+
+...
