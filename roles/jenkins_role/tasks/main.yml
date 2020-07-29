@@ -86,7 +86,6 @@
       - { src: 'Dockerfile.j2', dest: './Docker/Dockerfile' }
       - { src: '00-basic-security.groovy.j2', dest: './Docker/scripts/00-basic-security.groovy' }
       - { src: '01-global-settings.groovy.j2', dest: './Docker/scripts/01-global-settings.groovy' }
-      - { src: '02-matrix-autorization.groovy.j2', dest: './Docker/scripts/02-matrix-autorization.groovy' }
       - { src: '03-add-credentials.groovy.j2', dest: './Docker/scripts/03-add-credentials.groovy' }
       - { src: '04-create-job.groovy.j2', dest: './Docker/scripts/04-create-job.groovy' }
       - { src: '05-maven.groovy.j2', dest: './Docker/scripts/05-maven.groovy' }

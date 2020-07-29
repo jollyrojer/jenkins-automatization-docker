@@ -18,7 +18,7 @@ if(!(instance.getAuthorizationStrategy() instanceof hudson.security.GlobalMatrix
     instance.setAuthorizationStrategy(new hudson.security.GlobalMatrixAuthorizationStrategy())
 
 def user = instance.getSecurityRealm().createAccount("{{ jenkins_user }}", "{{ jenkins_pass }}")
-user.setFullName(env.JENKINS_FULLNAME)
+user.setFullName("{{ jenkins_fullName }}")
 user.addProperty(new org.jenkinsci.main.modules.cli.auth.ssh.UserPropertyImpl("{{ public_key }}"))
 user.save()
 instance.getAuthorizationStrategy().add(Jenkins.ADMINISTER, "{{ jenkins_user }}")

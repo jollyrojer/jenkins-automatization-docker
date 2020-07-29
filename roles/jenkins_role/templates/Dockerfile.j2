@@ -1,5 +1,7 @@
 FROM jenkins/jenkins:2.235.2-lts-centos7
 
+ENV JENKINS_USER {{ jenkins_user }}
+ENV JENKINS_PASS {{ jenkins_pass }}
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 # ENV CASC_JENKINS_CONFIG /var/jenkins_home/casc_configs/jenkins.yaml
 
@@ -9,6 +11,8 @@ COPY ./jenkins-plugins /usr/share/jenkins/jenkins-plugins
 RUN while read i ; \
       do /usr/local/bin/install-plugins.sh $i ; \
     done < /usr/share/jenkins/jenkins-plugins
+
+RUN /usr/local/bin/plugins.sh /usr/share/jenkins/jenkins-plugins
 
 COPY ./scripts/. /usr/share/jenkins/ref/init.groovy.d/
 

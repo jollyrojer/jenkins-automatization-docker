@@ -28,7 +28,7 @@ pipelineJob('deploy') {
   definition {
     cps {
       script(readFileFromWorkspace('/usr/share/jenkins/ref/init.groovy.d/Jenkinsfile'))
-      sandbox(false)
+      sandbox(true)
     }
   }
 }
@@ -37,5 +37,18 @@ pipelineJob('deploy') {
 def jobManagement = new JenkinsJobManagement(System.out, [:], new File('.'))
 new DslScriptLoader(jobManagement).runScript(jobDSL)
 
+// Approve script
+def scriptApproval = org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval.get()
+
+String[] signs = [
+    "method org.jenkinsci.plugins.workflow.steps.FlowInterruptedException getCauses",
+    "method org.jenkinsci.plugins.workflow.support.steps.input.Rejection getUser"
+    ]
+
+for( String sign : signs ) {
+    scriptApproval.approveSignature(sign)
+}
+
+scriptApproval.save()
 //def workspace = new File('.')
 // def jobManagement = new JenkinsJobManagement(System.out, [:], workspace)
