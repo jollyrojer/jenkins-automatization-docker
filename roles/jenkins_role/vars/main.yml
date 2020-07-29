@@ -19,3 +19,5 @@ mavenRepo                         : maven-snapshots
 jenkinsSSHcredentials_description : private key for GitHub
 jenkinsKey_id                     : nexus-cred
 jenkinsKey_description            : Login to Nexus3 OSS
+jenkinsKey_user                   : admin
+jenkinsKey_pass                   : password
