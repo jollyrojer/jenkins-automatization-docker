@@ -1,0 +1,31 @@
+---
+
+  - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+    seboolean:
+      name: httpd_can_network_connect
+      state: yes
+      persistent: yes
+
+  - name: enable http
+    firewalld:
+      zone: public
+      service: http
+      permanent: yes
+      state: enabled
+
+  - name: reload firewall-cmd
+    systemd:
+      name: firewall-cmd
+      state: reloaded
+      enabled: yes
+
+  - name: disable selinux
+    lineinfile:
+      path: /etc/selinux/config
+      regexp: '^SELINUX='
+      line: 'SELINUX=disabled'
+
+  - name: Unconditionally reboot the machine with all defaults
+    reboot:
+
+...

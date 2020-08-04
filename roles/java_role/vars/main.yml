@@ -1,0 +1,5 @@
+bucket_name        : artifacts.gd-gcp-internship-kha-koh.appspot.com/test-petclinic
+gcloud_access_key  :
+gcloud_secret_key  :
+jre                : jre-8u261-linux-x64.tar
+jdk                : jdk-8u261-linux-x64.tar

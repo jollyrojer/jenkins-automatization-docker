@@ -1,0 +1,21 @@
+---
+
+  - name: download petclinic
+    get_url:
+      url: {{ petclinic_url }}
+      dest: '{{ petclinic_path }}'
+      username: '{{ user }}'
+      password: '{{ password }}'
+
+  - name: Make petclinic service
+    template:
+      src: petclinic.service.j2
+      dest: /etc/systemd/system/petclinic.service
+
+  - name: start petclinic
+    systemd:
+      name: petclinic
+      state: started
+      enabled: yes
+
+...

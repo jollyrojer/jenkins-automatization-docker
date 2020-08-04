@@ -1,0 +1,14 @@
+[Unit]
+Description=Spring Petclinic App
+After=syslog.target
+After=network.target[Service]
+User=dzakharchenko
+Type=simple
+[Service]
+ExecStart=/usr/bin/java -jar '{{ petclinic_path }}'
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=petclinic
+[Install]
+WantedBy=multi-user.target
