@@ -1,0 +1,41 @@
+---
+  
+# - name: download pet jar
+#   uri:
+#       url: "http://34.107.32.31:8081/repository/maven-snapshots/org/springframework/samples/spring-petclinic/2.3.1a.BUILD-SNAPSHOT/spring-petclinic-2.3.1a.BUILD-20200729.114716-1.jar"
+#       user: "admin"
+#       password: "password"
+#       method: GET
+#       force_basic_auth: yes
+
+- name: download pet
+  maven_artifact:
+    group_id: org.springframework.samples
+    artifact_id: spring-petclinic
+    extension: jar
+    version: 2.3.1a.BUILD-SNAPSHOT
+    repository_url: 'http://34.107.32.31:8081/repository/maven-snapshots/'
+    username: admin
+    password: password
+    dest: /petclinic.jar
+    mode: "777"    
+          
+- name: add petclinic.service file
+  copy:
+    src: /Users/dpysarenko/gd_intern/ansible/roles/pet_role/files/petclinic.service
+    dest: /etc/systemd/system/petclinic.service
+
+- name: add nginx.conf file
+  copy:
+    src: /Users/dpysarenko/gd_intern/ansible/roles/pet_role/files/nginx.conf  
+    dest: /etc/nginx/nginx.conf
+      
+- name: start pet
+  service:
+       name: petclinic
+       state: started     
+       
+- name: restart nginx
+  service:
+      name: nginx
+      state: restarted        

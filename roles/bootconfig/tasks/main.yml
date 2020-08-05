@@ -1,0 +1,24 @@
+---
+
+
+  - name: update yum
+    yum: update_cache=yes
+
+  # - name: install wget
+  #   yum: name='wget' state=installed
+
+  - name: install jdk
+    yum: name='java-1.8.0-openjdk.x86_64' state=installed
+    
+  - name: disabling selinux
+    selinux:
+      state: disabled
+  
+  - name: enable firewall
+    firewalld:
+      service: http
+      permanent: yes
+      state: enabled     
+   
+  - name: Reboot a slow machine that might have lots of updates to apply
+    reboot:
