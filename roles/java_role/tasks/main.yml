@@ -5,23 +5,26 @@
 
   - name: Create a directory
     file:
-      path: /tmp/soft/
+      path: /tmp/soft
       state: directory
       mode: '0755'
-
   - name: Download java
-    gc_storage:
-      bucket:        '{{ bucket_name }}'
-      object:        '{{ jdk }}'
-      dest:          /tmp/soft/{{ item }}
-      gs_access_key: '{{ gcloud_access_key }}'
-      gs_secret_key: '{{ gcloud_secret_key }}'
-      mode: get
-
-  - name: Unarchive a file that is already on the remote machine
-    unarchive:
-      src: /tmp/soft/'{{ jdk }}'
-      dest: /bin/
-      remote_src: yes
+    yum:
+      name: java-1.8.0-openjdk
+      state: present
+  # - name: Download java
+  #   gc_storage:
+  #     bucket:        '{{ bucket_name }}'
+  #     object:        '{{ jdk }}'
+  #     dest:          /tmp/soft/{{ jdk }}
+  #     gs_access_key: '{{ gcloud_access_key }}'
+  #     gs_secret_key: '{{ gcloud_secret_key }}'
+  #     mode: get
+  #
+  # - name: Unarchive a file that is already on the remote machine
+  #   unarchive:
+  #     src: /tmp/soft/'{{ jdk }}'
+  #     dest: /bin/
+  #     remote_src: yes
 
 ...

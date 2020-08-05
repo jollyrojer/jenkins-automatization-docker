@@ -1,0 +1,13 @@
+---
+
+- hosts: Web
+  become: true
+  gather_facts: no
+  tags: Web
+  roles:
+    - { role: pre_req }
+    # - { role: java_role }
+    # - { role: nginx_role }
+    # - { role: start_petclinic }
+
+...
